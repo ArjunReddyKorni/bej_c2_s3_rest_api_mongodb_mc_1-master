@@ -1,6 +1,8 @@
 package com.example.track.service;
 
 import com.example.track.domain.Track;
+import com.example.track.exception.ArtistNotFoundException;
+import com.example.track.exception.TrackAlreadyFoundException;
 import com.example.track.exception.TrackNotFoundException;
 import com.example.track.repository.TrackRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,10 @@ public class TrackServiceImpl implements TrackService{
         this.trackRepository=trackRepository;
     }
     @Override
-    public Track saveTrack(Track track) {
+    public Track saveTrack(Track track) throws TrackAlreadyFoundException{
+        if (trackRepository.findById(track.getTrackId()).isPresent()){
+            throw new TrackAlreadyFoundException();
+        }
         return trackRepository.save(track);
     }
 
@@ -38,17 +43,17 @@ public class TrackServiceImpl implements TrackService{
     }
 
     @Override
-    public List<Track> getAllTrackByTrackRating() throws TrackNotFoundException {
-        if(trackRepository.findAllTrackByTrackRating().isEmpty()){
+    public List<Track> getAllTrackByTrackRating(int trackRating) throws TrackNotFoundException {
+        if(trackRepository.findAllTrackByTrackRating(trackRating).isEmpty()){
             throw new TrackNotFoundException();
         }
-        return trackRepository.findAllTrackByTrackRating();
+        return trackRepository.findAllTrackByTrackRating(trackRating);
     }
 
     @Override
-    public List<Track> getAllTrackByArtistName(String artistName) throws TrackNotFoundException {
+    public List<Track> getAllTrackByArtistName(String artistName) throws  ArtistNotFoundException {
         if(trackRepository.findAllTrackByArtistName(artistName).isEmpty()){
-            throw new TrackNotFoundException();
+            throw new ArtistNotFoundException();
         }
         return trackRepository.findAllTrackByArtistName(artistName);
     }

@@ -1,6 +1,8 @@
 package com.example.track.controller;
 
 import com.example.track.domain.Track;
+import com.example.track.exception.ArtistNotFoundException;
+import com.example.track.exception.TrackAlreadyFoundException;
 import com.example.track.exception.TrackNotFoundException;
 import com.example.track.service.TrackService;
 import org.springframework.http.HttpStatus;
@@ -15,11 +17,18 @@ public class TrackController {
         this.trackService=trackService;
     }
     @PostMapping("/track")
-    public ResponseEntity<?>insertTrack(@RequestBody Track track){
-        Track track1=trackService.saveTrack(track);
-        return new ResponseEntity<>(track1, HttpStatus.CREATED);
+    public ResponseEntity<?>insertTrack(@RequestBody Track track) throws TrackAlreadyFoundException {
+        ResponseEntity<?> responseEntity = null;
+        try {
+            responseEntity = new ResponseEntity<>(trackService.saveTrack(track), HttpStatus.CREATED);
+        }catch (TrackAlreadyFoundException e){
+            throw new TrackAlreadyFoundException();
+        }catch (Exception e){
+            responseEntity=new ResponseEntity<>(e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return responseEntity;
     }
-    @GetMapping("/track1")
+    @GetMapping("/track1")//RequestHandlerMethod
     public ResponseEntity<?> fetchAllTrack()throws Exception{
         return new ResponseEntity<>(trackService.getAllTrack(),HttpStatus.OK);
     }
@@ -28,7 +37,7 @@ public class TrackController {
         ResponseEntity responseEntity=null;
         try{
             trackService.deleteTrack(trackId);
-            responseEntity=new ResponseEntity("Succesfully Deleted",HttpStatus.OK);
+            responseEntity=new ResponseEntity("Successfully Deleted",HttpStatus.OK);
         }catch (TrackNotFoundException trackNotFoundException){
             throw new TrackNotFoundException();
         }catch (Exception exception){
@@ -37,11 +46,11 @@ public class TrackController {
         return responseEntity;
     }
 
-    @GetMapping("/track3")
-    public ResponseEntity<?> fetchByTrackRating()throws TrackNotFoundException{
+    @GetMapping("/track3/{trackRating}")
+    public ResponseEntity<?> fetchByTrackRating(@PathVariable int trackRating)throws TrackNotFoundException{
         ResponseEntity responseEntity=null;
         try{
-            responseEntity =new ResponseEntity(trackService.getAllTrackByTrackRating(),HttpStatus.FOUND);
+            responseEntity =new ResponseEntity(trackService.getAllTrackByTrackRating(trackRating),HttpStatus.FOUND);
 
         }catch (TrackNotFoundException trackNotFoundException){
             throw new TrackNotFoundException();
@@ -50,13 +59,13 @@ public class TrackController {
     }
 
     @GetMapping("/track4/{artistName}")
-    public ResponseEntity<?> fetchByArtistName(@PathVariable String artistName)throws TrackNotFoundException{
+    public ResponseEntity<?> fetchByArtistName(@PathVariable String artistName) throws  ArtistNotFoundException {
         ResponseEntity responseEntity=null;
         try{
             responseEntity =new ResponseEntity(trackService.getAllTrackByArtistName(artistName),HttpStatus.FOUND);
 
-        }catch (TrackNotFoundException trackNotFoundException){
-            throw new TrackNotFoundException();
+        } catch (ArtistNotFoundException e) {
+            throw new ArtistNotFoundException();
         }
         return responseEntity;
     }
